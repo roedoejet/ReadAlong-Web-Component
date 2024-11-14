@@ -37,6 +37,14 @@ jobs:
             git commit -m "chore: update browserslist db"
             git push
           fi
+      - name: Install and run the back-end API, needed for end-to-end testing
+        run: |
+          git clone https://github.com/ReadAlongs/Studio
+          cd Studio
+          pip install -e . -r requirements.api.txt
+          ./run-web-api.sh &
+          # wait for the API to be up
+          curl --retry 20 --retry-delay 1 --retry-all-errors http://localhost:8000/api/v1/langs
       - name: Ng test for studio-web
         run: |
           npx nx build web-component
