@@ -9,7 +9,6 @@ import { ToastrService } from "ngx-toastr";
 import { BehaviorSubject, Subject, takeUntil } from "rxjs";
 import { WcStylingService } from "./wc-styling.service";
 import { MatDialog, MatDialogRef } from "@angular/material/dialog";
-import { MatList } from "@angular/material/list";
 import { B64Service } from "../../b64.service";
 
 @Component({

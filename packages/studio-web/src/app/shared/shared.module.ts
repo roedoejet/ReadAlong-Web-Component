@@ -8,16 +8,9 @@ import {
   WcStylingComponent,
   WCStylingHelper,
 } from "./wc-styling/wc-styling.component";
-import { MatListModule } from "@angular/material/list";
 @NgModule({
-  declarations: [DownloadComponent, WcStylingComponent, WCStylingHelper],
-  imports: [
-    BrowserModule,
-    MaterialModule,
-    FormsModule,
-    CommonModule,
-    MatListModule,
-  ],
-  exports: [DownloadComponent, WcStylingComponent, WCStylingHelper],
+  declarations: [DownloadComponent, WcStylingComponent], //WCStylingHelper],
+  imports: [BrowserModule, MaterialModule, FormsModule, CommonModule],
+  exports: [DownloadComponent, WcStylingComponent], // WCStylingHelper],
 })
 export class SharedModule {}
