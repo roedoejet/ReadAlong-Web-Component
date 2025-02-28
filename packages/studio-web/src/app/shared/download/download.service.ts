@@ -17,6 +17,7 @@ import {
   SupportedOutputs,
 } from "../../ras.service";
 import { Components } from "@readalongs/web-component/loader";
+import { WcStylingService } from "../wc-styling/wc-styling.service";
 
 interface Image {
   path: string;
@@ -180,10 +181,17 @@ Please host all assets on your server, include the font and package imports defi
     readalong: Components.ReadAlong,
     slots: ReadAlongSlots,
     b64Audio: string,
+    wcStylingService: WcStylingService,
   ) {
     await this.updateImages(rasDoc, true, "image", readalong);
     await this.updateTranslations(rasDoc, readalong);
     let rasB64 = this.b64Service.xmlToB64(rasDoc);
+    let b64Css = "";
+    const cssText = wcStylingService.$wcStyleInput.getValue();
+    const customFont = wcStylingService.$wcStyleFonts.getValue();
+    if (cssText) {
+      b64Css = ` css-url="data:text/css;base64,${this.b64Service.utf8_to_b64(cssText)}" `;
+    }
     if (this.b64Service.jsAndFontsBundle$.value !== null) {
       let blob = new Blob(
         [
@@ -220,10 +228,11 @@ Please host all assets on your server, include the font and package imports defi
                 <meta name="generator" content="@readalongs/studio-web ${environment.packageJson.singleFileBundleVersion}">
                 <title>${slots.title}</title>
                 <style>${this.b64Service.jsAndFontsBundle$.value[1]}</style>
+                <style id="ra-wc-custom-font" type="text/css">${customFont}</style>
                 <script src="${this.b64Service.jsAndFontsBundle$.value[0]}" version="${environment.packageJson.singleFileBundleVersion}" timestamp="${environment.packageJson.singleFileBundleTimestamp}"></script>
               </head>
               <body>
-                <read-along version="${environment.packageJson.singleFileBundleVersion}"  href="data:application/readalong+xml;base64,${rasB64}" audio="${b64Audio}" image-assets-folder="">
+                <read-along version="${environment.packageJson.singleFileBundleVersion}"  href="data:application/readalong+xml;base64,${rasB64}" audio="${b64Audio}" image-assets-folder=""${b64Css}>
                 <span slot="read-along-header">${slots.title}</span>
                 <span slot="read-along-subheader">${slots.subtitle}</span>
                 </read-along>
@@ -255,7 +264,10 @@ Please host all assets on your server, include the font and package imports defi
     slots: ReadAlongSlots,
     readalong: Components.ReadAlong,
     from = "Studio",
+    wcStylingService: WcStylingService,
   ) {
+    const cssText = wcStylingService.$wcStyleInput.getValue();
+    const customFont = wcStylingService.$wcStyleFonts.getValue();
     if (selectedOutputFormat == SupportedOutputs.html) {
       var element = document.createElement("a");
       const blob = await this.createSingleFileBlob(
@@ -263,6 +275,7 @@ Please host all assets on your server, include the font and package imports defi
         readalong,
         slots,
         b64Audio,
+        wcStylingService,
       );
       if (blob) {
         const basename = this.createRASBasename(slots.title);
@@ -293,6 +306,7 @@ Please host all assets on your server, include the font and package imports defi
         readalong,
         slots,
         b64Audio,
+        wcStylingService,
       );
       const basename = this.createRASBasename(slots.title);
 
@@ -335,6 +349,12 @@ Please host all assets on your server, include the font and package imports defi
         rasXML.documentElement,
       );
       const rasFile = new Blob([xmlString], { type: "application/xml" });
+      let pathCss = "";
+      if (cssText) {
+        const cssFile = new Blob([customFont + cssText], { type: "text/css" });
+        assetsFolder?.file(`${basename}.css`, cssFile);
+        pathCss = ` css-url="assets/${basename}.css" `;
+      }
       assetsFolder?.file(`${basename}.readalong`, rasFile);
       // - add index.html file
       const sampleHtml = `
@@ -350,13 +370,13 @@ Please host all assets on your server, include the font and package imports defi
             <link href="https://fonts.googleapis.com/css?family=Lato%7CMaterial+Icons%7CMaterial+Icons+Outlined" rel="stylesheet">
           </head>
 
-          <body>
-            <!-- Here is how you declare the Web Component. Supported languages: en, fr -->
-            <read-along href="assets/${basename}.readalong" audio="assets/${basename}.${audioExtension}" theme="light" language="en" image-assets-folder="assets/">
-              <span slot='read-along-header'>${slots.title}</span>
-              <span slot='read-along-subheader'>${slots.subtitle}</span>
-            </read-along>
-          </body>
+            <body>
+                <!-- Here is how you declare the Web Component. Supported languages: en, fr -->
+                <read-along href="assets/${basename}.readalong" audio="assets/${basename}.${audioExtension}" theme="light" language="en" image-assets-folder="assets/"${pathCss}>
+                    <span slot='read-along-header'>${slots.title}</span>
+                    <span slot='read-along-subheader'>${slots.subtitle}</span>
+                </read-along>
+            </body>
 
           <!-- The last step needed is to import the package -->
           <script type="module" src='https://unpkg.com/@readalongs/web-component@^${environment.packageJson.singleFileBundleVersion}/dist/web-component/web-component.esm.js'></script>
